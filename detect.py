@@ -3,13 +3,14 @@ import argparse
 from models import *  # set ONNX_EXPORT in models.py
 from utils.datasets import *
 from utils.utils import *
-
+from detect_utils import get_number
 
 def detect(save_img=False):
     imgsz = (320, 192) if ONNX_EXPORT else opt.img_size  # (320, 192) or (416, 256) or (608, 352) for (height, width)
     out, source, weights, half, view_img, save_txt = opt.output, opt.source, opt.weights, opt.half, opt.view_img, opt.save_txt
     webcam = source == '0' or source.startswith('rtsp') or source.startswith('http') or source.endswith('.txt')
-
+    digits_file = "digits_results.txt"
+    digits_list = []
     # Initialize
     device = torch_utils.select_device(device='cpu' if ONNX_EXPORT else opt.device)
     if os.path.exists(out):
@@ -133,6 +134,9 @@ def detect(save_img=False):
 
             # Print time (inference + NMS)
             print('%sDone. (%.3fs)' % (s, t2 - t1))
+            digits_list.append(get_number(path, pred))
+
+            
 
             # Stream results
             if view_img:
@@ -162,6 +166,10 @@ def detect(save_img=False):
             os.system('open ' + save_path)
 
     print('Done. (%.3fs)' % (time.time() - t0))
+    with open(digits_file, "w") as f:
+      for digit in digits_list:
+        f.write(digit + "\n")
+
 
 
 if __name__ == '__main__':
